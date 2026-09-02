@@ -1,0 +1,99 @@
+# Device and acquisition configuration.
+#
+# One entry per physical device. The driver name selects the transport; the
+# simulator driver needs nothing installed and is what the tests and the demo
+# run against.
+
+devices:
+  - name: line1
+    driver: simulator          # simulator | modbus_tcp | modbus_rtu | opcua
+    description: Bottling line 1 controller
+    # Used when driver is modbus_tcp:
+    host: 192.0.2.20
+    port: 502
+    unit_id: 1
+    timeout: 1.0
+    retries: 2
+    # Used when driver is modbus_rtu:
+    serial_port: /dev/ttyUSB0
+    baudrate: 19200
+    parity: E
+    stopbits: 1
+    bytesize: 8
+    # Used when driver is opcua:
+    url: opc.tcp://192.0.2.20:4840/
+    namespace: 2
+
+# Poll groups. Period is in seconds.
+#
+# These numbers are the single biggest lever on PLC load. Reading every tag
+# every 100 ms is what makes a small PLC's scan time double and its HMI go
+# sluggish -- the controller has to service the Modbus stack between logic
+# scans, and it is not free. Read what changes fast, fast; read the rest
+# slowly. See docs/FIELD_NOTES.md, "Why polling every tag every 100 ms kills a
+# PLC".
+poll_groups:
+  fast:
+    period: 0.5
+    description: Speed, current, counters, status bits -- anything an operator watches move
+  normal:
+    period: 2.0
+    description: Temperatures, levels, pressures, vibration -- process variables with real lag
+  slow:
+    period: 10.0
+    description: Totalisers, recipe, ambient -- values that barely move
+
+acquisition:
+  # Registers of padding worth reading to avoid a second request. A round trip
+  # costs far more than eight registers of payload on any real link, so
+  # bridging small gaps is a straight win.
+  max_gap: 8
+  # A scan is flagged as slow when it uses more than this fraction of its
+  # period. Above ~0.8 the loop has no headroom left for a retry.
+  overrun_ratio: 0.8
+  reconnect_base_backoff: 0.5
+  reconnect_max_backoff: 30.0
+
+historian:
+  path: factorylink.sqlite
+  # Compression deviation is set to twice the tag's exception deadband, which
+  # is the usual starting ratio: the deadband decides what is worth reporting,
+  # the door decides what is worth storing.
+  tolerance_factor: 2.0
+  # Force a stored point at least this often even when nothing changes, so a
+  # flat trend still proves the tag was being read.
+  max_interval: 60.0
+  retention_days: 90
+
+oee:
+  # Seconds per bottle at the design rate: 120 bottles/min.
+  ideal_cycle_time: 0.5
+  shift_length_hours: 8
+  state_tag: line_state
+  total_count_tag: product_count
+  reject_count_tag: reject_count
+
+safety:
+  # READ THIS. factorylink is a monitoring tool, not a safety instrumented
+  # system. Nothing below makes it one. Safety functions belong in a safety
+  # PLC or a hardwired circuit.
+  #
+  # read_only is the default and should stay true unless somebody has a
+  # specific, reviewed reason to write.
+  read_only: true
+  allow_list:
+    - conveyor_speed_sp
+    - target_rate
+  require_confirmation:
+    - conveyor_speed_sp
+  clamp_out_of_range: true
+  max_writes_per_window: 6
+  rate_window: 60.0
+  token_ttl: 60.0
+
+dashboard:
+  # Loopback by default. A dashboard with a write endpoint should not appear on
+  # a plant network by accident.
+  host: 127.0.0.1
+  port: 8377
+  trends: [conveyor_speed, motor_current, tank_level, fill_temperature]

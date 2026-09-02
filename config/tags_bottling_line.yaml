@@ -1,0 +1,665 @@
+# Example tag database: a simulated bottling line.
+#
+# This file turns "holding register 4, two words, little word order, no
+# scaling" into "motor_current, 12.3 A". It is the single source of truth for
+# the address map: drivers, poller, alarms, historian and dashboard all read
+# it, and nothing else in the codebase hard-codes an address.
+#
+# Fields
+#   name        unique tag name
+#   device      which device the tag lives on; reads are never merged across
+#               devices
+#   area        holding | input | coil | discrete -- four separate address
+#               spaces, never merged with each other
+#   address     ZERO-BASED protocol address. Vendor documentation often uses
+#               the 4xxxx convention, where holding register 40001 is protocol
+#               address 0. Getting this wrong shifts the whole map by one.
+#   data_type   bool | int16 | uint16 | int32 | uint32 | float32 | float64
+#   word_order  big    = first register is the most significant word (ABCD)
+#               little = first register is the least significant word (CDAB)
+#   byte_order  big    = normal Modbus byte order inside each register
+#               little = bytes swapped inside each register (BADC / DCBA)
+#   bit         bit index 0..15 when several booleans share one status word
+#   scale/offset  engineering = raw * scale + offset
+#   deadband    smallest change worth reporting and archiving, in engineering
+#               units. Tie this to the instrument's real accuracy, not to what
+#               looks tidy on a trend.
+#   poll_group  which rate class this tag belongs to (see devices.yaml)
+#   writable    whether a write is even conceivable; the safety allow-list in
+#               config/devices.yaml is a second, independent gate
+#   alarm       hi_hi / hi / lo / lo_lo limits plus the alarm deadband
+#
+# Note the deliberately mixed word and byte orders: motor_current is CDAB and
+# vibration_rms is BADC, because a real line is a mix of vendors and this file
+# is where that mess gets recorded once instead of being rediscovered.
+#
+# Regenerate this file from the built-in map with:
+#   tools/factorylink dump-tags --format yaml
+tags:
+  - name: conveyor_speed
+    device: line1
+    area: holding
+    address: 0
+    data_type: float32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: m/min
+    deadband: 0.1
+    poll_group: fast
+    writable: false
+    description: Conveyor line speed
+    min_value: 0.0
+    max_value: 120.0
+    alarm:
+      hi_hi: 40.0
+      hi: 34.0
+      deadband: 1.0
+  - name: conveyor_speed_sp
+    device: line1
+    area: holding
+    address: 2
+    data_type: float32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: m/min
+    deadband: 0.0
+    poll_group: slow
+    writable: true
+    description: Conveyor speed setpoint
+    min_value: 0.0
+    max_value: 45.0
+  - name: motor_current
+    device: line1
+    area: holding
+    address: 4
+    data_type: float32
+    word_order: little
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: A
+    deadband: 0.1
+    poll_group: fast
+    writable: false
+    description: Conveyor motor RMS current
+    min_value: 0.0
+    max_value: 60.0
+    alarm:
+      hi_hi: 24.0
+      hi: 18.0
+      deadband: 0.8
+  - name: tank_level
+    device: line1
+    area: holding
+    address: 6
+    data_type: float32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: "%"
+    deadband: 0.2
+    poll_group: normal
+    writable: false
+    description: Product tank level
+    min_value: 0.0
+    max_value: 100.0
+    alarm:
+      lo: 25.0
+      lo_lo: 10.0
+      deadband: 2.0
+  - name: fill_temperature
+    device: line1
+    area: holding
+    address: 8
+    data_type: float32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: degC
+    deadband: 0.05
+    poll_group: normal
+    writable: false
+    description: Chilled product temperature at the filler
+    min_value: -10.0
+    max_value: 60.0
+    alarm:
+      hi_hi: 12.0
+      hi: 8.0
+      lo: 1.5
+      lo_lo: 0.5
+      deadband: 0.4
+  - name: ambient_temperature
+    device: line1
+    area: holding
+    address: 10
+    data_type: float32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: degC
+    deadband: 0.2
+    poll_group: slow
+    writable: false
+    description: Filling room ambient temperature
+    min_value: -20.0
+    max_value: 60.0
+  - name: chiller_output
+    device: line1
+    area: holding
+    address: 12
+    data_type: float32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: "%"
+    deadband: 1.0
+    poll_group: normal
+    writable: false
+    description: Chiller control output
+    min_value: 0.0
+    max_value: 100.0
+  - name: fill_head_pressure
+    device: line1
+    area: holding
+    address: 14
+    data_type: float32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: bar
+    deadband: 0.02
+    poll_group: fast
+    writable: false
+    description: Fill head supply pressure
+    min_value: 0.0
+    max_value: 10.0
+    alarm:
+      hi_hi: 3.8
+      hi: 3.2
+      lo: 1.2
+      deadband: 0.15
+  - name: fill_valve_position
+    device: line1
+    area: holding
+    address: 16
+    data_type: uint16
+    word_order: big
+    byte_order: big
+    scale: 0.1
+    offset: 0.0
+    unit: "%"
+    deadband: 0.5
+    poll_group: fast
+    writable: false
+    description: Fill valve demand
+    min_value: 0.0
+    max_value: 100.0
+  - name: bottle_weight
+    device: line1
+    area: holding
+    address: 17
+    data_type: uint16
+    word_order: big
+    byte_order: big
+    scale: 0.5
+    offset: 0.0
+    unit: g
+    deadband: 1.0
+    poll_group: fast
+    writable: false
+    description: Last filled bottle net weight
+    min_value: 0.0
+    max_value: 2000.0
+    alarm:
+      hi_hi: 522.0
+      hi: 512.0
+      lo: 488.0
+      lo_lo: 478.0
+      deadband: 2.0
+  - name: product_count
+    device: line1
+    area: holding
+    address: 18
+    data_type: uint32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: bottles
+    deadband: 0.5
+    poll_group: fast
+    writable: false
+    description: Total bottles produced this shift
+    min_value: 0.0
+  - name: reject_count
+    device: line1
+    area: holding
+    address: 20
+    data_type: uint32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: bottles
+    deadband: 0.5
+    poll_group: fast
+    writable: false
+    description: Bottles rejected this shift
+    min_value: 0.0
+  - name: good_count
+    device: line1
+    area: holding
+    address: 22
+    data_type: uint32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: bottles
+    deadband: 0.5
+    poll_group: fast
+    writable: false
+    description: Bottles accepted this shift
+    min_value: 0.0
+  - name: line_state
+    device: line1
+    area: holding
+    address: 24
+    data_type: uint16
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: fast
+    writable: false
+    description: "0 stopped, 1 running, 2 fault, 3 starved"
+    min_value: 0.0
+    max_value: 3.0
+  - name: fault_code
+    device: line1
+    area: holding
+    address: 25
+    data_type: uint16
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: fast
+    writable: false
+    description: "Active fault code, 0 when healthy"
+    min_value: 0.0
+  - name: sts_running
+    device: line1
+    area: holding
+    address: 26
+    data_type: bool
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: fast
+    writable: false
+    description: "Status word bit 0: line running"
+    bit: 0
+  - name: sts_fault
+    device: line1
+    area: holding
+    address: 26
+    data_type: bool
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: fast
+    writable: false
+    description: "Status word bit 1: fault latched"
+    bit: 1
+  - name: sts_estop_ok
+    device: line1
+    area: holding
+    address: 26
+    data_type: bool
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: fast
+    writable: false
+    description: "Status word bit 2: E-stop circuit healthy"
+    bit: 2
+  - name: sts_low_level
+    device: line1
+    area: holding
+    address: 26
+    data_type: bool
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: fast
+    writable: false
+    description: "Status word bit 3: tank low level switch"
+    bit: 3
+  - name: sts_jam
+    device: line1
+    area: holding
+    address: 26
+    data_type: bool
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: fast
+    writable: false
+    description: "Status word bit 7: conveyor jam sensor"
+    bit: 7
+  - name: cycle_time
+    device: line1
+    area: holding
+    address: 27
+    data_type: uint16
+    word_order: big
+    byte_order: big
+    scale: 0.001
+    offset: 0.0
+    unit: s
+    deadband: 0.005
+    poll_group: fast
+    writable: false
+    description: Measured cycle time per bottle
+    min_value: 0.0
+    max_value: 60.0
+  - name: runtime_seconds
+    device: line1
+    area: holding
+    address: 28
+    data_type: uint32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: s
+    deadband: 1.0
+    poll_group: slow
+    writable: false
+    description: Accumulated running time
+    min_value: 0.0
+  - name: downtime_seconds
+    device: line1
+    area: holding
+    address: 30
+    data_type: uint32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: s
+    deadband: 1.0
+    poll_group: slow
+    writable: false
+    description: Accumulated stopped time
+    min_value: 0.0
+  - name: vibration_rms
+    device: line1
+    area: holding
+    address: 32
+    data_type: float32
+    word_order: big
+    byte_order: little
+    scale: 1.0
+    offset: 0.0
+    unit: mm/s
+    deadband: 0.1
+    poll_group: normal
+    writable: false
+    description: "Conveyor drive vibration, ISO 10816 RMS"
+    min_value: 0.0
+    max_value: 50.0
+    alarm:
+      hi_hi: 11.2
+      hi: 7.1
+      deadband: 0.6
+  - name: air_pressure
+    device: line1
+    area: holding
+    address: 34
+    data_type: float32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: bar
+    deadband: 0.05
+    poll_group: normal
+    writable: false
+    description: Plant compressed air header pressure
+    min_value: 0.0
+    max_value: 12.0
+    alarm:
+      lo: 5.5
+      lo_lo: 4.5
+      deadband: 0.25
+  - name: capper_torque
+    device: line1
+    area: holding
+    address: 36
+    data_type: int16
+    word_order: big
+    byte_order: big
+    scale: 0.01
+    offset: 0.0
+    unit: N.m
+    deadband: 0.02
+    poll_group: fast
+    writable: false
+    description: "Capper applied torque, last bottle"
+    min_value: -50.0
+    max_value: 50.0
+    alarm:
+      hi_hi: 3.0
+      hi: 2.5
+      lo: 1.0
+      deadband: 0.15
+  - name: label_offset
+    device: line1
+    area: holding
+    address: 37
+    data_type: int16
+    word_order: big
+    byte_order: big
+    scale: 0.1
+    offset: 0.0
+    unit: mm
+    deadband: 0.2
+    poll_group: normal
+    writable: false
+    description: Label placement offset from datum
+    min_value: -100.0
+    max_value: 100.0
+    alarm:
+      hi: 2.0
+      lo: -2.0
+      deadband: 0.4
+  - name: energy_kwh
+    device: line1
+    area: holding
+    address: 38
+    data_type: float32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: kWh
+    deadband: 0.005
+    poll_group: slow
+    writable: false
+    description: Drive energy consumed this shift
+    min_value: 0.0
+  - name: recipe_id
+    device: line1
+    area: holding
+    address: 40
+    data_type: uint16
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: slow
+    writable: false
+    description: Active recipe number
+    min_value: 0.0
+  - name: target_rate
+    device: line1
+    area: holding
+    address: 41
+    data_type: uint16
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: bottles/min
+    deadband: 0.0
+    poll_group: slow
+    writable: true
+    description: Target production rate
+    min_value: 0.0
+    max_value: 600.0
+  - name: line_rate
+    device: line1
+    area: holding
+    address: 42
+    data_type: float32
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: bottles/min
+    deadband: 0.5
+    poll_group: fast
+    writable: false
+    description: Instantaneous production rate
+    min_value: 0.0
+    max_value: 600.0
+  - name: cmd_start
+    device: line1
+    area: coil
+    address: 0
+    data_type: bool
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: normal
+    writable: true
+    description: Start command coil
+  - name: cmd_stop
+    device: line1
+    area: coil
+    address: 1
+    data_type: bool
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: normal
+    writable: true
+    description: Stop command coil
+  - name: cmd_reset_fault
+    device: line1
+    area: coil
+    address: 2
+    data_type: bool
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: normal
+    writable: true
+    description: Fault reset coil
+  - name: cmd_chiller_enable
+    device: line1
+    area: coil
+    address: 3
+    data_type: bool
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: normal
+    writable: true
+    description: Chiller enable coil
+  - name: di_bottle_present
+    device: line1
+    area: discrete
+    address: 0
+    data_type: bool
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: fast
+    writable: false
+    description: Bottle-present photo-eye at the filler
+  - name: di_guard_closed
+    device: line1
+    area: discrete
+    address: 1
+    data_type: bool
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: fast
+    writable: false
+    description: Machine guard door closed
+  - name: di_estop_healthy
+    device: line1
+    area: discrete
+    address: 2
+    data_type: bool
+    word_order: big
+    byte_order: big
+    scale: 1.0
+    offset: 0.0
+    unit: ""
+    deadband: 0.0
+    poll_group: fast
+    writable: false
+    description: E-stop relay healthy

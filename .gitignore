@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+.DS_Store
+
+# Historian databases and exports produced by running the tool.
+*.sqlite
+*.sqlite-journal
+*.db
+examples/output/

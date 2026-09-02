@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "factorylink"
+version = "0.1.0"
+description = "Industrial data acquisition: Modbus/OPC UA/MQTT drivers, poll scheduling with register coalescing, alarms, a compressing historian, OEE and a dependency-free live dashboard."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Pratyush Vatsa" }]
+keywords = [
+    "modbus",
+    "opc-ua",
+    "sparkplug",
+    "scada",
+    "plc",
+    "historian",
+    "oee",
+    "industrial-automation",
+]
+classifiers = [
+    "Intended Audience :: Manufacturing",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Topic :: System :: Monitoring",
+]
+dependencies = ["PyYAML>=5.4"]
+
+[project.optional-dependencies]
+modbus = ["pymodbus>=3.0"]
+serial = ["pymodbus[serial]>=3.0"]
+opcua = ["asyncua>=1.0"]
+mqtt = ["paho-mqtt>=1.6"]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+factorylink = "factorylink.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# ROS 2 workstations ship launch_testing / launch_testing_ros pytest plugins
+# that are not compatible with recent pytest and abort collection before any
+# test runs. Blocking them by name is a no-op when they are not installed, and
+# this repo's likely readers do have ROS on their machines.
+addopts = "-q -p no:launch_testing -p no:launch_ros"
+
+[tool.ruff]
+line-length = 100

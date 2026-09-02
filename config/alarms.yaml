@@ -1,0 +1,113 @@
+# Alarm configuration.
+#
+# Limit alarms (hi_hi / hi / lo / lo_lo) are generated automatically from the
+# limits carried on each tag in tags_bottling_line.yaml. This file adds the
+# alarms that cannot be expressed as a single limit -- rate of change,
+# deviation from setpoint, and digital state -- and sets the defaults used for
+# the generated ones.
+#
+# Every alarm here has a deadband, an on-delay, or both. That is not
+# decoration. An alarm on a noisy analogue signal with no deadband and no
+# on-delay will toggle once per scan while the signal sits on the limit: at a
+# 500 ms scan that is 7,200 events an hour from one tag, which is how an alarm
+# list becomes wallpaper. See docs/FIELD_NOTES.md, "Alarm rationalisation".
+#
+# Fields
+#   type          hi | hi_hi | lo | lo_lo | roc_hi | roc_lo | deviation | digital
+#   limit         threshold in engineering units; for roc_* it is units/second
+#   deadband      how far the signal must recover before the alarm clears
+#   on_delay      seconds the condition must hold before it is annunciated
+#   off_delay     seconds the condition must be gone before it clears
+#   severity      diagnostic | low | medium | high | critical
+#   latched       true = stays in the list until acknowledged, even after the
+#                 process recovers
+#   roc_window    seconds over which a rate of change is measured
+#   trigger_state digital alarms only: the boolean state that is the alarm
+
+defaults:
+  on_delay: 2.0
+  off_delay: 2.0
+  latch_severities: [critical]
+
+alarms:
+  - name: temperature_runaway
+    tag: fill_temperature
+    type: roc_hi
+    limit: 0.02          # degC per second, i.e. 1.2 degC/min
+    roc_window: 60.0
+    deadband: 0.005
+    on_delay: 20.0
+    severity: high
+    latched: true
+    message: >-
+      Fill temperature climbing faster than 1.2 degC/min. The chiller is not
+      keeping up, or it has failed. Product above 8 degC has to be dumped, so
+      catch this on the rate rather than waiting for the high limit.
+
+  - name: tank_draining_fast
+    tag: tank_level
+    type: roc_lo
+    limit: 0.5           # percent per second
+    roc_window: 30.0
+    deadband: 0.05
+    on_delay: 10.0
+    severity: medium
+    message: >-
+      Product tank falling faster than 30 %/min. Either the refill valve did
+      not open or there is a leak. Twenty minutes of warning before the line
+      starves.
+
+  - name: speed_off_setpoint
+    tag: conveyor_speed
+    type: deviation
+    setpoint_tag: conveyor_speed_sp
+    limit: 3.0           # m/min
+    deadband: 0.5
+    on_delay: 15.0
+    severity: medium
+    message: >-
+      Conveyor is not holding its speed setpoint. A drive that cannot follow
+      its reference is usually a mechanical load problem, not a tuning problem.
+
+  - name: conveyor_jam
+    tag: sts_jam
+    type: digital
+    trigger_state: true
+    on_delay: 1.0
+    off_delay: 5.0
+    severity: critical
+    latched: true
+    message: Conveyor jam sensor tripped. The line has stopped.
+
+  - name: estop_circuit_unhealthy
+    tag: sts_estop_ok
+    type: digital
+    trigger_state: false
+    on_delay: 0.0
+    severity: critical
+    latched: true
+    message: >-
+      E-stop circuit reports unhealthy. This is a monitoring alarm only. The
+      actual stop function is in the safety relay and does not depend on this
+      software.
+
+  - name: guard_door_open
+    tag: di_guard_closed
+    type: digital
+    trigger_state: false
+    on_delay: 0.5
+    off_delay: 2.0
+    severity: high
+    latched: true
+    message: Machine guard door opened while the line was in automatic.
+
+  - name: low_level_switch
+    tag: sts_low_level
+    type: digital
+    trigger_state: true
+    on_delay: 5.0
+    off_delay: 30.0
+    severity: low
+    message: >-
+      Tank low-level switch made. Off-delay is 30 s because the level sloshes
+      across the switch when the filler cycles.

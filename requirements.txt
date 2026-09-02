@@ -1,0 +1,22 @@
+# Runtime: PyYAML only, for reading the tag and alarm config files. A CSV tag
+# database works with the standard library alone.
+PyYAML>=5.4
+
+# Test runner.
+pytest>=7.0
+
+# --------------------------------------------------------------------------
+# Everything below is OPTIONAL. Every driver that needs one of these guards
+# its import, so the package installs, imports and passes its whole test
+# suite without any of them. The built-in simulated PLC needs nothing.
+# --------------------------------------------------------------------------
+
+# Modbus TCP and RTU drivers.
+# pymodbus>=3.0
+# pymodbus[serial]>=3.0
+
+# OPC UA driver.
+# asyncua>=1.0
+
+# MQTT Sparkplug B publisher.
+# paho-mqtt>=1.6

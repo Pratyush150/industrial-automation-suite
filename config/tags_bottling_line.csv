@@ -1,0 +1,39 @@
+name,device,area,address,bit,data_type,word_order,byte_order,scale,offset,unit,deadband,poll_group,writable,min_value,max_value,alarm_lo_lo,alarm_lo,alarm_hi,alarm_hi_hi,alarm_deadband,description
+conveyor_speed,line1,holding,0,,float32,big,big,1.0,0.0,m/min,0.1,fast,0,0.0,120.0,,,34.0,40.0,1.0,Conveyor line speed
+conveyor_speed_sp,line1,holding,2,,float32,big,big,1.0,0.0,m/min,0.0,slow,1,0.0,45.0,,,,,0.0,Conveyor speed setpoint
+motor_current,line1,holding,4,,float32,little,big,1.0,0.0,A,0.1,fast,0,0.0,60.0,,,18.0,24.0,0.8,Conveyor motor RMS current
+tank_level,line1,holding,6,,float32,big,big,1.0,0.0,%,0.2,normal,0,0.0,100.0,10.0,25.0,,,2.0,Product tank level
+fill_temperature,line1,holding,8,,float32,big,big,1.0,0.0,degC,0.05,normal,0,-10.0,60.0,0.5,1.5,8.0,12.0,0.4,Chilled product temperature at the filler
+ambient_temperature,line1,holding,10,,float32,big,big,1.0,0.0,degC,0.2,slow,0,-20.0,60.0,,,,,0.0,Filling room ambient temperature
+chiller_output,line1,holding,12,,float32,big,big,1.0,0.0,%,1.0,normal,0,0.0,100.0,,,,,0.0,Chiller control output
+fill_head_pressure,line1,holding,14,,float32,big,big,1.0,0.0,bar,0.02,fast,0,0.0,10.0,,1.2,3.2,3.8,0.15,Fill head supply pressure
+fill_valve_position,line1,holding,16,,uint16,big,big,0.1,0.0,%,0.5,fast,0,0.0,100.0,,,,,0.0,Fill valve demand
+bottle_weight,line1,holding,17,,uint16,big,big,0.5,0.0,g,1.0,fast,0,0.0,2000.0,478.0,488.0,512.0,522.0,2.0,Last filled bottle net weight
+product_count,line1,holding,18,,uint32,big,big,1.0,0.0,bottles,0.5,fast,0,0.0,,,,,,0.0,Total bottles produced this shift
+reject_count,line1,holding,20,,uint32,big,big,1.0,0.0,bottles,0.5,fast,0,0.0,,,,,,0.0,Bottles rejected this shift
+good_count,line1,holding,22,,uint32,big,big,1.0,0.0,bottles,0.5,fast,0,0.0,,,,,,0.0,Bottles accepted this shift
+line_state,line1,holding,24,,uint16,big,big,1.0,0.0,,0.0,fast,0,0.0,3.0,,,,,0.0,"0 stopped, 1 running, 2 fault, 3 starved"
+fault_code,line1,holding,25,,uint16,big,big,1.0,0.0,,0.0,fast,0,0.0,,,,,,0.0,"Active fault code, 0 when healthy"
+sts_running,line1,holding,26,0,bool,big,big,1.0,0.0,,0.0,fast,0,,,,,,,0.0,Status word bit 0: line running
+sts_fault,line1,holding,26,1,bool,big,big,1.0,0.0,,0.0,fast,0,,,,,,,0.0,Status word bit 1: fault latched
+sts_estop_ok,line1,holding,26,2,bool,big,big,1.0,0.0,,0.0,fast,0,,,,,,,0.0,Status word bit 2: E-stop circuit healthy
+sts_low_level,line1,holding,26,3,bool,big,big,1.0,0.0,,0.0,fast,0,,,,,,,0.0,Status word bit 3: tank low level switch
+sts_jam,line1,holding,26,7,bool,big,big,1.0,0.0,,0.0,fast,0,,,,,,,0.0,Status word bit 7: conveyor jam sensor
+cycle_time,line1,holding,27,,uint16,big,big,0.001,0.0,s,0.005,fast,0,0.0,60.0,,,,,0.0,Measured cycle time per bottle
+runtime_seconds,line1,holding,28,,uint32,big,big,1.0,0.0,s,1.0,slow,0,0.0,,,,,,0.0,Accumulated running time
+downtime_seconds,line1,holding,30,,uint32,big,big,1.0,0.0,s,1.0,slow,0,0.0,,,,,,0.0,Accumulated stopped time
+vibration_rms,line1,holding,32,,float32,big,little,1.0,0.0,mm/s,0.1,normal,0,0.0,50.0,,,7.1,11.2,0.6,"Conveyor drive vibration, ISO 10816 RMS"
+air_pressure,line1,holding,34,,float32,big,big,1.0,0.0,bar,0.05,normal,0,0.0,12.0,4.5,5.5,,,0.25,Plant compressed air header pressure
+capper_torque,line1,holding,36,,int16,big,big,0.01,0.0,N.m,0.02,fast,0,-50.0,50.0,,1.0,2.5,3.0,0.15,"Capper applied torque, last bottle"
+label_offset,line1,holding,37,,int16,big,big,0.1,0.0,mm,0.2,normal,0,-100.0,100.0,,-2.0,2.0,,0.4,Label placement offset from datum
+energy_kwh,line1,holding,38,,float32,big,big,1.0,0.0,kWh,0.005,slow,0,0.0,,,,,,0.0,Drive energy consumed this shift
+recipe_id,line1,holding,40,,uint16,big,big,1.0,0.0,,0.0,slow,0,0.0,,,,,,0.0,Active recipe number
+target_rate,line1,holding,41,,uint16,big,big,1.0,0.0,bottles/min,0.0,slow,1,0.0,600.0,,,,,0.0,Target production rate
+line_rate,line1,holding,42,,float32,big,big,1.0,0.0,bottles/min,0.5,fast,0,0.0,600.0,,,,,0.0,Instantaneous production rate
+cmd_start,line1,coil,0,,bool,big,big,1.0,0.0,,0.0,normal,1,,,,,,,0.0,Start command coil
+cmd_stop,line1,coil,1,,bool,big,big,1.0,0.0,,0.0,normal,1,,,,,,,0.0,Stop command coil
+cmd_reset_fault,line1,coil,2,,bool,big,big,1.0,0.0,,0.0,normal,1,,,,,,,0.0,Fault reset coil
+cmd_chiller_enable,line1,coil,3,,bool,big,big,1.0,0.0,,0.0,normal,1,,,,,,,0.0,Chiller enable coil
+di_bottle_present,line1,discrete,0,,bool,big,big,1.0,0.0,,0.0,fast,0,,,,,,,0.0,Bottle-present photo-eye at the filler
+di_guard_closed,line1,discrete,1,,bool,big,big,1.0,0.0,,0.0,fast,0,,,,,,,0.0,Machine guard door closed
+di_estop_healthy,line1,discrete,2,,bool,big,big,1.0,0.0,,0.0,fast,0,,,,,,,0.0,E-stop relay healthy
