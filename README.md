@@ -15,6 +15,19 @@ Python package name: `factorylink`.
 
 ---
 
+## Screenshots
+
+![factorylink dashboard showing trends, live tag values, OEE, downtime Pareto and an active alarm list](docs/screenshots/dashboard.png)
+The dashboard served by `factorylink serve`, running against the built-in simulated bottling line with four faults injected. Trends, 38 live tags, OEE, the downtime Pareto and six active alarms - all rendered server-side as inline SVG, with no npm and no internet access.
+
+![Terminal table of 38 decoded PLC tags with address, poll group, value, unit and quality](docs/screenshots/demo-scan-table.png)
+`factorylink --demo` after a simulated one-hour shift: every tag decoded from its raw registers, with its address, poll group, engineering value and quality flag.
+
+![Terminal OEE report and downtime Pareto from the same simulated shift](docs/screenshots/demo-oee-report.png)
+The OEE report and downtime Pareto from the same run. Availability, performance and quality are kept separate, and the Pareto says which fault to go and fix first.
+
+---
+
 ## The problem
 
 The data is already in the PLC. Somebody wants it on a screen, or in a
